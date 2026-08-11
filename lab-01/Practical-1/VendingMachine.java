@@ -56,7 +56,7 @@ System.out.println("total: " + total);
 }
 
 System.out.println("total: " + total);
-System.out.println("total: " + total + "diff" + (total-PRICE));
+System.out.println("total: " + total + "diff" +(total-PRICE));
 
 
 }
