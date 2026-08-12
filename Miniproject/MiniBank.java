@@ -1,5 +1,4 @@
-import java.util.*;
-
+import java.util.Scanner;
 
 record BankInfo(String name, String branch) {
 }
@@ -7,48 +6,64 @@ record BankInfo(String name, String branch) {
 public class MiniBank {
 
     public static void main(String[] args) {
+
         BankInfo bank = new BankInfo("MiniBank", "CHARUSAT");
-        System.out.println(bank);
+
+        System.out.println("===== " + bank.name() + " =====");
+        System.out.println("Branch: " + bank.branch());
+
         Scanner sc = new Scanner(System.in);
 
-while (true) {
+        while (true) {
 
-    System.out.println("\n===== MiniBank =====");
-    System.out.println("1. Open Account");
-    System.out.println("2. Deposit");
-    System.out.println("3. Withdraw");
-    System.out.println("4. Transfer");
-    System.out.println("5. Exit");
-    System.out.print("Enter your choice: ");
+            System.out.println("\n===== MiniBank Menu =====");
+            System.out.println("1. Open Account");
+            System.out.println("2. Deposit");
+            System.out.println("3. Withdraw");
+            System.out.println("4. Transfer");
+            System.out.println("5. Exit");
+            System.out.print("Enter your choice: ");
 
-    int choice = sc.nextInt();
-    MenuOption option = switch (choice) {
-    case 1 -> MenuOption.OPEN_ACCOUNT;
-    case 2 -> MenuOption.DEPOSIT;
-    case 3 -> MenuOption.WITHDRAW;
-    case 4 -> MenuOption.TRANSFER;
-    case 5 -> MenuOption.EXIT;
-   default -> {
-    System.out.println("Invalid choice");
-    yield null;
-}
-};
+            int choice = sc.nextInt();
 
- 
-if (option == null) {
-    continue;
-}
-    switch (option) {
-        case OPEN_ACCOUNT -> System.out.println("Opening a new account...");
-        case DEPOSIT -> System.out.println("Depositing money...");
-        case WITHDRAW -> System.out.println("Withdrawing money...");
-        case TRANSFER -> System.out.println("Transferring money...");
-        case EXIT -> {
-            System.out.println("Exiting the application. Goodbye!");
-            return;
+            MenuOption option = switch (choice) {
+                case 1 -> MenuOption.OPEN_ACCOUNT;
+                case 2 -> MenuOption.DEPOSIT;
+                case 3 -> MenuOption.WITHDRAW;
+                case 4 -> MenuOption.TRANSFER;
+                case 5 -> MenuOption.EXIT;
+                default -> null;
+            };
+
+            if (option == null) {
+                System.out.println("Invalid choice. Please try again.");
+                continue;
+            }
+
+            String message = switch (option) {
+                case OPEN_ACCOUNT ->
+                    "Open Account — to be implemented in a later lab";
+
+                case DEPOSIT ->
+                    "Deposit — to be implemented in a later lab";
+
+                case WITHDRAW ->
+                    "Withdraw — to be implemented in a later lab";
+
+                case TRANSFER ->
+                    "Transfer — to be implemented in a later lab";
+
+                case EXIT ->
+                    "Goodbye!";
+            };
+
+            System.out.println(message);
+
+            if (option == MenuOption.EXIT) {
+                break;
+            }
         }
-        default -> System.out.println("Invalid choice. Please try again.");
+
+        sc.close();
     }
-}
-}
 }
