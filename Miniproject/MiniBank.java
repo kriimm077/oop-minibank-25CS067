@@ -71,6 +71,62 @@ public class MiniBank {
                 + clonedCustomer.getCustomerId());
 
         // ==============================
+        // Lab 04 - Validator testing
+        // ==============================
+
+        System.out.println("\n===== Validator Tests =====");
+
+        // Mobile
+        System.out.println("Valid mobile: "
+                + Validator.isValidMobile("9876543210"));
+
+        System.out.println("Invalid mobile: "
+                + Validator.isValidMobile("1234567890"));
+
+        // Email
+        System.out.println("Valid email: "
+                + Validator.isValidEmail("abc@example.com"));
+
+        System.out.println("Invalid email: "
+                + Validator.isValidEmail("abc@example"));
+
+        // PAN
+        System.out.println("Valid PAN: "
+                + Validator.isValidPan("ABCDE1234F"));
+
+        System.out.println("Invalid PAN: "
+                + Validator.isValidPan("ABC123"));
+
+        // IFSC
+        System.out.println("Valid IFSC: "
+                + Validator.isValidIfsc("SBIN0001234"));
+
+        System.out.println("Invalid IFSC: "
+                + Validator.isValidIfsc("SBIN123"));
+
+        // ==============================
+        // Lab 04 - Command Parser testing
+        // ==============================
+
+        System.out.println("\n===== Command Parser Test =====");
+
+        Command command = CommandParser.parse("DEPOSIT AC0001 500");
+
+        System.out.println("Type: " + command.type());
+        System.out.println("Account Number: " + command.accountNumber());
+        System.out.println("Amount: " + command.amount());
+
+        // ==============================
+        // Lab 04 - Statement Formatter
+        // ==============================
+
+        System.out.println("\n===== Account Statement =====");
+
+        System.out.println(
+                StatementFormatter.buildStatement(account1)
+        );
+
+        // ==============================
         // MiniBank menu
         // ==============================
 
