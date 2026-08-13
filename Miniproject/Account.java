@@ -1,6 +1,6 @@
 import java.util.Objects;
 
-public class Account {
+public abstract class Account {
 
     private final String accountNumber;
     private String ownerName;
@@ -34,17 +34,22 @@ public class Account {
     }
 
     public boolean withdraw(long amount) {
+
         if (amount < 0) {
             return false;
         }
 
-        if (amount <= balance) {
+        if (canWithdraw(amount)) {
             balance -= amount;
             return true;
         }
 
         return false;
     }
+
+    public abstract double interestRate();
+
+    public abstract boolean canWithdraw(long amount);
 
     public String getAccountNumber() {
         return accountNumber;
@@ -62,8 +67,7 @@ public class Account {
         return active;
     }
 
-    // Practical 3: toString()
-  
+    @Override
     public String toString() {
         return "Account{"
                 + "accountNumber='" + accountNumber + '\''
@@ -73,10 +77,9 @@ public class Account {
                 + '}';
     }
 
-    // Practical 3: equals()
-    // Two accounts are equal when their account numbers are equal.
-   
+    @Override
     public boolean equals(Object o) {
+
         if (this == o) {
             return true;
         }
@@ -90,52 +93,8 @@ public class Account {
         return accountNumber.equals(other.accountNumber);
     }
 
-    // Practical 3: hashCode()
-
+    @Override
     public int hashCode() {
         return Objects.hash(accountNumber);
-    }
-
-    public static void main(String[] args) {
-
-        Account[] accounts = {
-            new Account("Krima", 5000),
-            new Account("Dhruv", 3000),
-            new Account("Jagruti", 1000)
-        };
-
-        accounts[0].deposit(2000);
-
-        System.out.println("After deposit: " + accounts[0].getBalance());
-
-        boolean success = accounts[0].withdraw(3000);
-        System.out.println("Withdraw 3000: " + success);
-        System.out.println("Balance: " + accounts[0].getBalance());
-
-        success = accounts[0].withdraw(10000);
-        System.out.println("Withdraw 10000: " + success);
-        System.out.println("Balance: " + accounts[0].getBalance());
-
-        accounts[1].deposit(1000);
-        accounts[2].deposit(500);
-
-        System.out.println("\nAll account balances:");
-
-        for (Account account : accounts) {
-            System.out.println(account);
-        }
-
-        // Practical 3: equals() test
-        System.out.println("\nEquality test:");
-        System.out.println("Account 1 equals Account 2: "
-                + accounts[0].equals(accounts[1]));
-
-        // Practical 3: instanceof test
-        Object obj = accounts[0];
-
-        System.out.println("\ninstanceof test:");
-        if (obj instanceof Account) {
-            System.out.println("obj is an Account");
-        }
     }
 }
