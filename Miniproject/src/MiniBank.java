@@ -1,7 +1,6 @@
 import java.util.Scanner;
 
-record BankInfo(String name, String branch) {
-}
+
 
 public class MiniBank {
 

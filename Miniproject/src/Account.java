@@ -34,7 +34,6 @@ public abstract class Account {
     }
 
     public boolean withdraw(long amount) {
-
         if (amount < 0) {
             return false;
         }
@@ -67,7 +66,6 @@ public abstract class Account {
         return active;
     }
 
-    @Override
     public String toString() {
         return "Account{"
                 + "accountNumber='" + accountNumber + '\''
@@ -77,9 +75,7 @@ public abstract class Account {
                 + '}';
     }
 
-    @Override
     public boolean equals(Object o) {
-
         if (this == o) {
             return true;
         }
@@ -93,7 +89,6 @@ public abstract class Account {
         return accountNumber.equals(other.accountNumber);
     }
 
-    @Override
     public int hashCode() {
         return Objects.hash(accountNumber);
     }
