@@ -1,10 +1,12 @@
-public class Customer {
+public class Customer implements Cloneable {
 
     private String name;
     private String email;
     private String mobile;
 
     private final String customerId;
+
+    private Address address;
 
     private static long customerCounter = 100;
 
@@ -34,5 +36,63 @@ public class Customer {
 
     public String getCustomerId() {
         return customerId;
+    }
+
+    // Get the customer's address
+    public Address getAddress() {
+        return address;
+    }
+
+    // Set the customer's address
+    public void setAddress(Address address) {
+        this.address = address;
+    }
+
+    // Clone the customer
+    @Override
+    public Customer clone() {
+        try {
+            Customer copy = (Customer) super.clone();
+
+            // Create a separate copy of Address
+            if (this.address != null) {
+                copy.address = new Address(
+                    address.getLine(),
+                    address.getCity(),
+                    address.getPincode()
+                );
+            }
+
+            return copy;
+
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+
+    // Static nested Address class
+    public static class Address {
+
+        private String line;
+        private String city;
+        private String pincode;
+
+        public Address(String line, String city, String pincode) {
+            this.line = line;
+            this.city = city;
+            this.pincode = pincode;
+        }
+
+        public String getLine() {
+            return line;
+        }
+
+        public String getCity() {
+            return city;
+        }
+
+        public String getPincode() {
+            return pincode;
+        }
     }
 }

@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 public class Account {
 
     private final String accountNumber;
@@ -60,6 +62,40 @@ public class Account {
         return active;
     }
 
+    // Practical 3: toString()
+  
+    public String toString() {
+        return "Account{"
+                + "accountNumber='" + accountNumber + '\''
+                + ", ownerName='" + ownerName + '\''
+                + ", balance=" + balance
+                + ", active=" + active
+                + '}';
+    }
+
+    // Practical 3: equals()
+    // Two accounts are equal when their account numbers are equal.
+   
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (!(o instanceof Account)) {
+            return false;
+        }
+
+        Account other = (Account) o;
+
+        return accountNumber.equals(other.accountNumber);
+    }
+
+    // Practical 3: hashCode()
+
+    public int hashCode() {
+        return Objects.hash(accountNumber);
+    }
+
     public static void main(String[] args) {
 
         Account[] accounts = {
@@ -86,13 +122,20 @@ public class Account {
         System.out.println("\nAll account balances:");
 
         for (Account account : accounts) {
-            System.out.println(
-                account.getAccountNumber()
-                + " - "
-                + account.getOwnerName()
-                + " - Balance: "
-                + account.getBalance()
-            );
+            System.out.println(account);
+        }
+
+        // Practical 3: equals() test
+        System.out.println("\nEquality test:");
+        System.out.println("Account 1 equals Account 2: "
+                + accounts[0].equals(accounts[1]));
+
+        // Practical 3: instanceof test
+        Object obj = accounts[0];
+
+        System.out.println("\ninstanceof test:");
+        if (obj instanceof Account) {
+            System.out.println("obj is an Account");
         }
     }
 }
