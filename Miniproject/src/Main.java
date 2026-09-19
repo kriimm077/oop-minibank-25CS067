@@ -1,3 +1,8 @@
+import model.Account;
+import model.SavingsAccount;
+import model.CurrentAccount;
+import model.FixedDepositAccount;
+
 public class Main {
 
     public static void main(String[] args) {

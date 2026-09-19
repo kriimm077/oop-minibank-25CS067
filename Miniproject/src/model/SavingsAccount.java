@@ -1,3 +1,9 @@
+
+package model;
+
+import util.*;
+
+
 public class SavingsAccount extends Account {
 
     private long minBalance;

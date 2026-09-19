@@ -1,6 +1,11 @@
-import java.util.Objects;
+package model;
 
-public abstract class Account {
+import java.util.Objects;
+import util.Transactable;
+import util.InterestBearing;
+
+
+public abstract class Account implements Transactable,InterestBearing {
 
     private final String accountNumber;
     private String ownerName;

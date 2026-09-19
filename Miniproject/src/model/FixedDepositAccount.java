@@ -1,4 +1,7 @@
-public class FixedDepositAccount extends Account {
+package model;
+
+import util.Premium;
+public class FixedDepositAccount extends Account implements Premium {
 
     public FixedDepositAccount(
             String ownerName,
