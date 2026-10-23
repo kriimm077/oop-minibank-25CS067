@@ -60,7 +60,7 @@ class Fan implements Switchable{
 
         public boolean isOn(){
 
-            return state;
+        return state;
         }
         }
 
