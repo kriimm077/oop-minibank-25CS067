@@ -17,14 +17,16 @@ public final class TransactionDemos {
         System.out.println("\n===== Managed Transaction Pool =====");
         Account account = new CurrentAccount("Pool Demo", 1_000, 0);
         TransactionProcessor processor = new TransactionProcessor();
+        processor.addAccount(account);
 
         try {
             for (int i = 1; i <= 12; i++) {
                 AccountTransaction.Type type = i % 2 == 0
                         ? AccountTransaction.Type.WITHDRAW
                         : AccountTransaction.Type.DEPOSIT;
+                Account sharedAccount = processor.getAccount(account.getAccountNumber());
                 processor.submit(new AccountTransaction(
-                        "Pool-" + i, account, type, 10));
+                        "Pool-" + i, sharedAccount, type, 10));
             }
         } finally {
             processor.stop();

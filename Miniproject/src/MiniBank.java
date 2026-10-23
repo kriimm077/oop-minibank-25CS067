@@ -15,6 +15,7 @@ import service.StatementFormatter;
 import service.TransactionDemos;
 import service.TransactionLog;
 import service.ReportGenerator;
+import service.AccountStore;
 import persistence.StatePersister;
 
 import util.WithdrawRule;
@@ -110,6 +111,8 @@ public static void main(String[] args) {
         current,
         fixedDeposit
     };
+
+    demonstrateAccountStore(accounts);
 
     try {
         demonstratePersistenceAndReporting(accounts);
@@ -378,6 +381,23 @@ private static void demonstratePersistenceAndReporting(Account[] accounts) throw
     for (String line : Files.readAllLines(reportFile)) {
         System.out.println(line);
     }
+}
+
+private static void demonstrateAccountStore(Account[] accounts) {
+    AccountStore accountStore = new AccountStore();
+    for (Account account : accounts) {
+        accountStore.add(account);
+        accountStore.addTransaction("Account opened: " + account.getAccountNumber());
+    }
+
+    System.out.println("\n===== Accounts Sorted by Balance =====");
+    for (Account account : accountStore.sortedByBalance()) {
+        System.out.println(account.getAccountNumber() + " | " + account.getOwnerName()
+                + " | balance: " + account.getBalance());
+    }
+    System.out.println("Stored accounts: " + accountStore.getAll().size());
+    System.out.println("Transaction history entries: "
+            + accountStore.getTransactionHistory().size());
 }
 
 
