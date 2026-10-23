@@ -1,5 +1,11 @@
 package model;
-public class Customer implements Cloneable {
+
+import java.io.Serial;
+import java.io.Serializable;
+
+public class Customer implements Cloneable, Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     private String name;
     private String email;
@@ -72,7 +78,9 @@ public class Customer implements Cloneable {
     }
 
     // Static nested Address class
-    public static class Address {
+    public static class Address implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
 
         private String line;
         private String city;
