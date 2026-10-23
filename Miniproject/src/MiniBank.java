@@ -1,4 +1,7 @@
 import java.util.Scanner;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import model.Account;
 import model.SavingsAccount;
 import model.CurrentAccount;
@@ -9,12 +12,56 @@ import model.TransactionType;
 import service.Command;
 import service.CommandParser;
 import service.StatementFormatter;
+import service.TransactionDemos;
+import service.TransactionLog;
+import service.ReportGenerator;
+import persistence.StatePersister;
 
 import util.WithdrawRule;
 import util.Premium;
+import util.AnnotationValidator;
+import exception.AccountNotFoundException;
+import exception.BankException;
+import exception.InsufficientFundsException;
+import exception.InvalidAmountException;
+import worker.AccountWorker;
 
 public class MiniBank {
 
+private static final int DEPOSIT_THREAD_COUNT = 10;
+private static final int DEPOSITS_PER_THREAD = 10_000;
+private static final long DEPOSIT_AMOUNT = 1;
+
+private static class BankDemoResource implements AutoCloseable {
+    @Override
+    public void close() {
+        System.out.println("Demo resource closed automatically.");
+    }
+}
+
+private static class UnsafeDemoAccount extends SavingsAccount {
+    private long unsafeBalance;
+
+    private UnsafeDemoAccount() {
+        super("Race Demo", 0, 0);
+    }
+
+    @Override
+    public void deposit(long amount) throws InvalidAmountException {
+        if (amount <= 0) {
+            throw new InvalidAmountException("Deposit amount must be greater than zero.");
+        }
+
+        long currentBalance = unsafeBalance;
+        Thread.yield();
+        unsafeBalance = currentBalance + amount;
+    }
+
+    @Override
+    public long getBalance() {
+        return unsafeBalance;
+    }
+}
 
 public static void main(String[] args) {
 
@@ -22,6 +69,24 @@ public static void main(String[] args) {
 
     System.out.println("===== " + bank.name() + " =====");
     System.out.println("Branch: " + bank.branch());
+
+    try {
+        demonstrateConcurrentDeposits();
+    } catch (InterruptedException exception) {
+        Thread.currentThread().interrupt();
+        System.out.println("Concurrent deposit demonstration was interrupted.");
+        return;
+    }
+
+    try {
+        TransactionDemos.runPoolDemo();
+        TransactionDemos.runProducerConsumerDemo();
+        TransactionDemos.runDeadlockAndOrderedTransferDemo();
+    } catch (InterruptedException exception) {
+        Thread.currentThread().interrupt();
+        System.out.println("Transaction engine demonstration was interrupted.");
+        return;
+    }
 
     Account savings = new SavingsAccount(
             "Krima",
@@ -46,6 +111,12 @@ public static void main(String[] args) {
         fixedDeposit
     };
 
+    try {
+        demonstratePersistenceAndReporting(accounts);
+    } catch (IOException exception) {
+        System.out.println("Could not save or report bank data: " + exception.getMessage());
+    }
+
     System.out.println("\n===== Account Interest Rates =====");
 
     for (Account account : accounts) {
@@ -60,37 +131,66 @@ public static void main(String[] args) {
         );
     }
 
-    System.out.println("\n===== Withdrawal Tests =====");
+    System.out.println("\n===== Exception Handling Tests =====");
 
-    System.out.println(
-            "Savings withdraw 3000: "
-            + savings.withdraw(3000)
-    );
+    try (BankDemoResource resource = new BankDemoResource()) {
+        try {
+            savings.withdraw(3000);
+            System.out.println("Savings withdrawal succeeded. Balance: "
+                    + savings.getBalance());
+        } catch (InvalidAmountException exception) {
+            System.out.println("Invalid withdrawal: " + exception.getMessage());
+        } catch (InsufficientFundsException exception) {
+            System.out.println("Savings withdrawal failed: " + exception.getMessage());
+            System.out.println("Shortfall: " + exception.getShortfall());
+        } finally {
+            System.out.println("Savings withdrawal attempt finished.");
+        }
 
-    System.out.println(
-            "Savings balance: "
-            + savings.getBalance()
-    );
+        try {
+            current.withdraw(4000);
+            System.out.println("Current account withdrawal succeeded. Balance: "
+                    + current.getBalance());
+        } catch (InvalidAmountException exception) {
+            System.out.println("Invalid withdrawal: " + exception.getMessage());
+        } catch (InsufficientFundsException exception) {
+            System.out.println("Current account withdrawal failed: " + exception.getMessage());
+            System.out.println("Shortfall: " + exception.getShortfall());
+        }
 
-    System.out.println(
-            "Current withdraw 4000: "
-            + current.withdraw(4000)
-    );
+        try {
+            fixedDeposit.withdraw(1000);
+        } catch (InvalidAmountException exception) {
+            System.out.println("Invalid withdrawal: " + exception.getMessage());
+        } catch (InsufficientFundsException exception) {
+            System.out.println("Fixed deposit withdrawal failed: " + exception.getMessage());
+            System.out.println("Shortfall: " + exception.getShortfall());
+        }
 
-    System.out.println(
-            "Current balance: "
-            + current.getBalance()
-    );
+        try {
+            savings.deposit(0);
+        } catch (InvalidAmountException exception) {
+            System.out.println("Deposit failed: " + exception.getMessage());
+        }
 
-    System.out.println(
-            "Fixed Deposit withdraw 1000: "
-            + fixedDeposit.withdraw(1000)
-    );
+        try {
+            current.transfer(savings, 500);
+            System.out.println("Transfer succeeded. Current balance: "
+                    + current.getBalance() + ", savings balance: " + savings.getBalance());
+        } catch (BankException exception) {
+            System.out.println("Transfer failed: " + exception.getMessage());
+        }
 
-    System.out.println(
-            "Fixed Deposit balance: "
-            + fixedDeposit.getBalance()
-    );
+        try {
+            savings.transfer(null, 100);
+        } catch (AccountNotFoundException exception) {
+            System.out.println("Transfer failed: " + exception.getMessage());
+        } catch (BankException exception) {
+            System.out.println("Transfer failed: " + exception.getMessage());
+        }
+    } finally {
+        System.out.println("Banking operation examples finished.");
+    }
 
     System.out.println("\n===== instanceof Test =====");
 
@@ -116,6 +216,7 @@ if (fixedDeposit instanceof Premium) {
     System.out.println("\n===== WithdrawRule Tests =====");
 
     WithdrawRule anonymousRule = new WithdrawRule() {
+        @Override
         public boolean allow(Account account, long amount) {
             return amount > 0 && amount <= account.getBalance();
         }
@@ -133,7 +234,24 @@ if (fixedDeposit instanceof Premium) {
             "Lambda rule: "
             + lambdaRule.allow(savings, 1000)
     );
+    System.out.println("\n===== Annotation Validation Tests =====");
 
+    Account badAccount = new SavingsAccount("Riya", -100, 2000);
+    Account longName = new SavingsAccount("Bartholomew Jr", 5000, 2000);
+    Account goodAccount = new SavingsAccount("Aman", 5000, 2000);
+
+    for (String error : AnnotationValidator.validate(badAccount)) {
+        System.out.println("Bad account error: " + error);
+    }
+
+    for (String error : AnnotationValidator.validateWithFieldNames(longName)) {
+        System.out.println("Long name error: " + error);
+    }
+
+    System.out.println(
+            "Good account errors: "
+            + AnnotationValidator.validate(goodAccount).length
+    );
     Scanner sc = new Scanner(System.in);
 
     while (true) {
@@ -194,6 +312,72 @@ if (fixedDeposit instanceof Premium) {
     }
 
     sc.close();
+}
+
+private static void demonstrateConcurrentDeposits() throws InterruptedException {
+    long expectedBalance = (long) DEPOSIT_THREAD_COUNT
+            * DEPOSITS_PER_THREAD
+            * DEPOSIT_AMOUNT;
+
+    System.out.println("\n===== Concurrent Deposit Test =====");
+    Account unsafeAccount = new UnsafeDemoAccount();
+    runDepositWorkers(unsafeAccount);
+    System.out.println("Without synchronization: " + unsafeAccount.getBalance());
+    System.out.println("Expected balance: " + expectedBalance);
+
+    Account safeAccount = new SavingsAccount("Thread Safe", 0, 0);
+    runDepositWorkers(safeAccount);
+    System.out.println("With synchronized deposit: " + safeAccount.getBalance());
+    System.out.println("Expected balance: " + expectedBalance);
+}
+
+private static void runDepositWorkers(Account account) throws InterruptedException {
+    Thread[] threads = new Thread[DEPOSIT_THREAD_COUNT];
+
+    for (int i = 0; i < threads.length; i++) {
+        threads[i] = new Thread(
+                new AccountWorker(account, DEPOSITS_PER_THREAD, DEPOSIT_AMOUNT),
+                "Depositor-" + (i + 1));
+        threads[i].start();
+    }
+
+    for (Thread thread : threads) {
+        thread.join();
+    }
+}
+
+private static void demonstratePersistenceAndReporting(Account[] accounts) throws IOException {
+    Path dataFolder = Path.of("data");
+    Path accountsFile = dataFolder.resolve("accounts.dat");
+    Path logsFolder = dataFolder.resolve("logs");
+    Path transactionFile = logsFolder.resolve("transactions.log");
+    Path reportFile = dataFolder.resolve("end-of-day-report.txt");
+
+    try {
+        accounts[0].deposit(250);
+        TransactionLog.append(transactionFile,
+                "DEPOSIT 250 " + accounts[0].getAccountNumber());
+
+        accounts[1].withdraw(100);
+        TransactionLog.append(transactionFile,
+                "WITHDRAW 100 " + accounts[1].getAccountNumber());
+    } catch (BankException exception) {
+        throw new IOException("Could not record the sample banking transactions.", exception);
+    }
+
+    StatePersister.save(accounts, accountsFile);
+    Account[] loadedAccounts = StatePersister.load(accountsFile);
+
+    System.out.println("\n===== Reloaded Accounts =====");
+    for (Account account : loadedAccounts) {
+        System.out.println(account);
+    }
+
+    ReportGenerator.generate(logsFolder, reportFile);
+    System.out.println("\n===== End-of-Day Report =====");
+    for (String line : Files.readAllLines(reportFile)) {
+        System.out.println(line);
+    }
 }
 
 

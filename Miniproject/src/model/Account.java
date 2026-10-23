@@ -1,15 +1,29 @@
 package model;
 
 import java.util.Objects;
+import java.io.Serializable;
 import util.Transactable;
 import util.InterestBearing;
+import model.annotation.Id;
+import model.annotation.Positive;
+import model.annotation.MaxLength;
+import exception.AccountNotFoundException;
+import exception.BankException;
+import exception.InsufficientFundsException;
+import exception.InvalidAmountException;
 
+public abstract class Account implements Transactable, InterestBearing, Serializable {
+    private static final long serialVersionUID = 1L;
 
-public abstract class Account implements Transactable,InterestBearing {
-
+    @Id
     private final String accountNumber;
+
+    @MaxLength(10)
     private String ownerName;
+
+    @Positive
     private long balance;
+
     private boolean active;
 
     private static long accountCounter = 0;
@@ -30,30 +44,53 @@ public abstract class Account implements Transactable,InterestBearing {
         this(ownerName, 0);
     }
 
-    public void deposit(long amount) {
-        if (amount < 0) {
-            return;
+    @Override
+    public synchronized void deposit(long amount) throws InvalidAmountException {
+        if (amount <= 0) {
+            throw new InvalidAmountException("Deposit amount must be greater than zero.");
         }
 
         balance += amount;
     }
 
-    public boolean withdraw(long amount) {
-        if (amount < 0) {
-            return false;
+    @Override
+    public synchronized void withdraw(long amount)
+            throws InsufficientFundsException, InvalidAmountException {
+        if (amount <= 0) {
+            throw new InvalidAmountException("Withdrawal amount must be greater than zero.");
         }
 
-        if (canWithdraw(amount)) {
-            balance -= amount;
-            return true;
+        if (!canWithdraw(amount)) {
+            long available = Math.max(0, availableToWithdraw());
+            throw new InsufficientFundsException(amount - available);
         }
 
-        return false;
+        balance -= amount;
     }
 
+    public void transfer(Account to, long amount) throws BankException {
+        try {
+            if (to == null) {
+                throw new AccountNotFoundException("The destination account was not found.");
+            }
+
+            withdraw(amount);
+            to.deposit(amount);
+        } catch (BankException exception) {
+            throw exception;
+        } finally {
+            System.out.println("Transfer attempt completed.");
+        }
+    }
+
+    @Override
     public abstract double interestRate();
 
     public abstract boolean canWithdraw(long amount);
+
+    protected long availableToWithdraw() {
+        return balance;
+    }
 
     public String getAccountNumber() {
         return accountNumber;
@@ -63,7 +100,8 @@ public abstract class Account implements Transactable,InterestBearing {
         return ownerName;
     }
 
-    public long getBalance() {
+    @Override
+    public synchronized long getBalance() {
         return balance;
     }
 
@@ -71,7 +109,8 @@ public abstract class Account implements Transactable,InterestBearing {
         return active;
     }
 
-    public String toString() {
+    @Override
+    public synchronized String toString() {
         return "Account{"
                 + "accountNumber='" + accountNumber + '\''
                 + ", ownerName='" + ownerName + '\''
@@ -80,6 +119,7 @@ public abstract class Account implements Transactable,InterestBearing {
                 + '}';
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -94,6 +134,7 @@ public abstract class Account implements Transactable,InterestBearing {
         return accountNumber.equals(other.accountNumber);
     }
 
+    @Override
     public int hashCode() {
         return Objects.hash(accountNumber);
     }

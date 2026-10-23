@@ -1,5 +1,11 @@
 package model;
-public class CurrentAccount extends Account {
+
+import java.io.Serial;
+import java.io.Serializable;
+
+public class CurrentAccount extends Account implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     private long overdraftLimit;
 
@@ -20,6 +26,11 @@ public class CurrentAccount extends Account {
     @Override
     public boolean canWithdraw(long amount) {
         return getBalance() - amount >= -overdraftLimit;
+    }
+
+    @Override
+    protected long availableToWithdraw() {
+        return Math.max(0, getBalance() + overdraftLimit);
     }
 
     public long getOverdraftLimit() {
