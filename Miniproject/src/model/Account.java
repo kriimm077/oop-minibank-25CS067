@@ -2,6 +2,9 @@ package model;
 
 import java.util.Objects;
 import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serial;
 import util.Transactable;
 import util.InterestBearing;
 import model.annotation.Id;
@@ -14,6 +17,7 @@ import exception.InvalidAmountException;
 
 public abstract class Account
         implements Transactable, InterestBearing, Serializable, Comparable<Account> {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Id
@@ -29,9 +33,23 @@ public abstract class Account
 
     private static long accountCounter = 0;
 
-    private static String generateAccountNumber() {
+    private static synchronized String generateAccountNumber() {
         accountCounter++;
         return String.format("AC%04d", accountCounter);
+    }
+
+    @Serial
+    private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+        input.defaultReadObject();
+        String digits = accountNumber.replaceFirst("^AC", "");
+        try {
+            long restoredCounter = Long.parseLong(digits);
+            synchronized (Account.class) {
+                accountCounter = Math.max(accountCounter, restoredCounter);
+            }
+        } catch (NumberFormatException exception) {
+            throw new IOException("Invalid serialized account number: " + accountNumber, exception);
+        }
     }
 
     public Account(String ownerName, long openingBalance) {

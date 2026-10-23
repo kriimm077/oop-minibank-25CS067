@@ -18,21 +18,33 @@ public class Validator {
 
 
     public static boolean isValidMobile(String mobile) {
+        if (mobile == null) {
+            return false;
+        }
         Matcher matcher = MOBILE.matcher(mobile);
         return matcher.matches();
     }
 
     public static boolean isValidEmail(String email) {
+        if (email == null) {
+            return false;
+        }
         Matcher matcher = EMAIL.matcher(email);
         return matcher.matches();
     }
 
     public static boolean isValidPan(String pan) {
+        if (pan == null) {
+            return false;
+        }
         Matcher matcher = PAN.matcher(pan);
         return matcher.matches();
     }
 
     public static boolean isValidIfsc(String ifsc) {
+        if (ifsc == null) {
+            return false;
+        }
         Matcher matcher = IFSC.matcher(ifsc);
         return matcher.matches();
     }
