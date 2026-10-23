@@ -16,6 +16,7 @@ import service.TransactionDemos;
 import service.TransactionLog;
 import service.ReportGenerator;
 import service.AccountStore;
+import service.Repository;
 import persistence.StatePersister;
 
 import util.WithdrawRule;
@@ -113,6 +114,7 @@ public static void main(String[] args) {
     };
 
     demonstrateAccountStore(accounts);
+    demonstrateGenericRepository(accounts);
 
     try {
         demonstratePersistenceAndReporting(accounts);
@@ -398,6 +400,21 @@ private static void demonstrateAccountStore(Account[] accounts) {
     System.out.println("Stored accounts: " + accountStore.getAll().size());
     System.out.println("Transaction history entries: "
             + accountStore.getTransactionHistory().size());
+}
+
+private static void demonstrateGenericRepository(Account[] accounts) {
+    Repository<Account> accountRepository = new Repository<>();
+    accountRepository.saveAll(accounts);
+
+    System.out.println("\n===== Generic Account Repository =====");
+    Account firstAccount = accountRepository.findById(accounts[0].getAccountNumber());
+    System.out.println("Found by ID: " + firstAccount);
+    System.out.println("All accounts in the repository:");
+    for (Account account : accountRepository.findAll()) {
+        System.out.println(account);
+    }
+    System.out.println("Average example: "
+            + Repository.average(new Integer[] {10, 20, 30}));
 }
 
 
